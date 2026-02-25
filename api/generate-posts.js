@@ -1,6 +1,6 @@
-import { CohereClientV2 } from 'cohere-ai'
+import { CohereClient } from 'cohere-ai'
 
-const cohere = new CohereClientV2({
+const cohere = new CohereClient({
   token: process.env.COHERE_API_KEY,
 })
 
@@ -16,7 +16,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' })
     }
 
-    // Prepare property context
     const propertyContext = `
 Property Name: ${property.name}
 Location: ${property.location}
@@ -27,8 +26,8 @@ Description: ${property.description}
 Images: ${property.images?.map((img) => `${img.name}: ${img.description}`).join(', ')}
     `.trim()
 
-    let prompt = ''
     let systemPrompt = ''
+    let userPrompt = ''
 
     if (platform === 'facebook') {
       systemPrompt = `You are a professional real estate marketing expert. Generate an engaging, long-form Facebook post (200-300 words) that sells this property. Include:
@@ -36,51 +35,53 @@ Images: ${property.images?.map((img) => `${img.name}: ${img.description}`).join(
 - Key features and benefits
 - Call-to-action
 - Relevant hashtags
-- Mention which images would work best for this post`
+- Mention which images would work best`
+      userPrompt = `Generate a Facebook post for this property:\n\n${propertyContext}`
+    }
 
-      prompt = `Generate a Facebook post for this property:\n\n${propertyContext}`
-    } else if (platform === 'twitter') {
-      systemPrompt = `You are a professional real estate marketing expert. Generate a concise, engaging Twitter/X post (approximately 190 characters) that sells this property. Include:
-- Hook/attention grabber
+    if (platform === 'twitter') {
+      systemPrompt = `You are a professional real estate marketing expert. Generate a concise, engaging Twitter/X post (approximately 190 characters). Include:
+- Hook
 - Key selling point
 - Call-to-action
-- Relevant hashtags (2-3)
-- Mention which image would work best`
+- 2-3 hashtags
+- Recommend best image`
+      userPrompt = `Generate a Twitter/X post for this property:\n\n${propertyContext}`
+    }
 
-      prompt = `Generate a Twitter/X post for this property:\n\n${propertyContext}`
-    } else if (platform === 'instagram') {
-      systemPrompt = `You are a professional real estate marketing expert. Generate an Instagram caption (100-150 words) that sells this property. Include:
-- Engaging opening line
+    if (platform === 'instagram') {
+      systemPrompt = `You are a professional real estate marketing expert. Generate an Instagram caption (100-150 words). Include:
+- Engaging opening
 - Key features
 - Lifestyle appeal
 - Call-to-action
-- Relevant hashtags (5-10)
-- Recommend the best image for this post
-- Suggest a music/vibe that matches the property`
-
-      prompt = `Generate an Instagram post for this property:\n\n${propertyContext}`
+- 5-10 hashtags
+- Best image recommendation
+- Suggested vibe/music`
+      userPrompt = `Generate an Instagram post for this property:\n\n${propertyContext}`
     }
 
+    // ✅ Correct Cohere usage (same pattern as your working version)
     const response = await cohere.chat({
-      model: 'command-r-plus',
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      system: systemPrompt,
+      model: 'command-a-03-2025',
+      message: userPrompt,
+      preamble: systemPrompt,
       maxTokens: 500,
     })
 
-    const content = response.message.content[0].text
+    const content = response?.text
+
+    if (!content) {
+      throw new Error('Cohere returned empty response')
+    }
 
     return res.status(200).json({
       success: true,
       platform,
-      content,
+      content: content.trim(),
       generatedAt: new Date().toISOString(),
     })
+
   } catch (error) {
     console.error('Generation error:', error)
     return res.status(500).json({

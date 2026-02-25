@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { auth, db } from '../firebase'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
-import { CldUploadWidget } from 'next-cloudinary'
 import { User, Phone, FileText, Award, Loader, Check } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { motion } from 'framer-motion'
@@ -54,6 +53,33 @@ export default function ProfileSetup() {
       }))
       toast.success('Photo uploaded successfully')
     }
+  }
+
+  const openCloudinaryWidget = () => {
+    if (!window.cloudinary) {
+      toast.error('Cloudinary not loaded')
+      return
+    }
+
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
+        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
+        sources: ['local', 'camera'],
+        multiple: false,
+      },
+      (error, result) => {
+        if (!error && result && result.event === 'success') {
+          setProfileData((prev) => ({
+            ...prev,
+            profilePhoto: result.info.secure_url,
+          }))
+          toast.success('Photo uploaded successfully')
+        }
+      }
+    )
+
+    widget.open()
   }
 
   const handleSubmit = async (e) => {
@@ -117,20 +143,13 @@ export default function ProfileSetup() {
                     className="w-24 h-24 rounded-lg object-cover border-2 border-indigo-500/30"
                   />
                 )}
-                <CldUploadWidget
-                  uploadPreset={import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET}
-                  onSuccess={handlePhotoUpload}
+                <button
+                  type="button"
+                  onClick={openCloudinaryWidget}
+                  className="btn-secondary"
                 >
-                  {({ open }) => (
-                    <button
-                      type="button"
-                      onClick={() => open()}
-                      className="btn-secondary"
-                    >
-                      Upload Photo
-                    </button>
-                  )}
-                </CldUploadWidget>
+                  Upload Photo
+                </button>
               </div>
             </div>
 

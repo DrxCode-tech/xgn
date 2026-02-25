@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { auth, db } from '../firebase'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
-import { CldUploadWidget } from 'next-cloudinary'
 import { Home, MapPin, DollarSign, Plus, Trash2, Loader, Image as ImageIcon } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { motion } from 'framer-motion'
@@ -23,6 +22,40 @@ export default function PropertyForm() {
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const openCloudinaryWidget = () => {
+    if (!window.cloudinary) {
+      toast.error('Cloudinary not loaded')
+      return
+    }
+
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
+        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
+        sources: ['local', 'camera'],
+        multiple: false,
+      },
+      (error, result) => {
+        if (!error && result && result.event === 'success') {
+          const newImage = {
+            url: result.info.secure_url,
+            description: '',
+            name: '',
+          }
+
+          setFormData((prev) => ({
+            ...prev,
+            images: [...prev.images, newImage],
+          }))
+
+          toast.success('Image uploaded!')
+        }
+      }
+    )
+
+    widget.open()
   }
 
   const handleImageUpload = (result) => {
@@ -230,21 +263,14 @@ export default function PropertyForm() {
               </h2>
 
               {/* Upload Widget */}
-              <CldUploadWidget
-                uploadPreset={import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET}
-                onSuccess={handleImageUpload}
+              <button
+                type="button"
+                onClick={openCloudinaryWidget}
+                className="btn-secondary w-full flex items-center justify-center gap-2 py-4"
               >
-                {({ open }) => (
-                  <button
-                    type="button"
-                    onClick={() => open()}
-                    className="btn-secondary w-full flex items-center justify-center gap-2 py-4"
-                  >
-                    <Plus size={20} />
-                    Upload Image
-                  </button>
-                )}
-              </CldUploadWidget>
+                <Plus size={20} />
+                Upload Image
+              </button>
 
               {/* Images List */}
               {formData.images.length > 0 && (
