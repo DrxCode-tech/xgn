@@ -18,8 +18,8 @@ export default function Signup() {
   const navigate = useNavigate()
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   }
 
   const handleEmailSignup = async (e) => {
