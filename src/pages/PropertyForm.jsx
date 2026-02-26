@@ -300,18 +300,6 @@ export default function PropertyForm() {
                     className="form-input"
                   />
                 </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">Website Link</label>
-                  <input
-                    type="text"
-                    name="brandWebsite"
-                    value={formData.brandWebsite}
-                    onChange={handleChange}
-                    placeholder="https://yourwebsite.com"
-                    className="form-input"
-                  />
-                </div>
               </div>
             </div>
 
