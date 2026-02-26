@@ -23,6 +23,9 @@ Price: ₦${property.price?.toLocaleString()}
 Bedrooms: ${property.bedrooms}
 Bathrooms: ${property.bathrooms}
 Description: ${property.description}
+Tone: ${property.tone || 'Luxury/Sophisticated'}
+Brand Hashtags: ${property.brandKit?.hashtags?.join(', ') || 'N/A'}
+Brand Phone: ${property.brandKit?.phone || 'N/A'}
 Images: ${property.images?.map((img) => `${img.name}: ${img.description}`).join(', ')}
     `.trim()
 
@@ -35,7 +38,8 @@ Images: ${property.images?.map((img) => `${img.name}: ${img.description}`).join(
 - Key features and benefits
 - Call-to-action
 - Relevant hashtags
-- Mention which images would work best`
+- Mention which images would work best
+- Make sure to match the tone of the property (e.g. luxury, family-friendly, modern)`
       userPrompt = `Generate a Facebook post for this property:\n\n${propertyContext}`
     }
 
@@ -45,7 +49,8 @@ Images: ${property.images?.map((img) => `${img.name}: ${img.description}`).join(
 - Key selling point
 - Call-to-action
 - 2-3 hashtags
-- Recommend best image`
+- Recommend best image
+- Ensure the tone matches the property's vibe (e.g. luxury, cozy, modern)`
       userPrompt = `Generate a Twitter/X post for this property:\n\n${propertyContext}`
     }
 
@@ -57,7 +62,8 @@ Images: ${property.images?.map((img) => `${img.name}: ${img.description}`).join(
 - Call-to-action
 - 5-10 hashtags
 - Best image recommendation
-- Suggested vibe/music`
+- Suggested vibe/music
+- Match the tone of the property (e.g. luxury, family-friendly, modern)`
       userPrompt = `Generate an Instagram post for this property:\n\n${propertyContext}`
     }
 

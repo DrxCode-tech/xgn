@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { auth, db } from '../firebase'
-import { doc, setDoc, serverTimestamp, arrayUnion } from 'firebase/firestore'
-import { Home, MapPin, DollarSign, Plus, Trash2, Loader, Image as ImageIcon } from 'lucide-react'
+import { doc, setDoc, arrayUnion } from 'firebase/firestore'
+import { Home, MapPin, DollarSign, Plus, Trash2, Loader, Image as ImageIcon, Sparkles } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { motion } from 'framer-motion'
 
@@ -15,7 +15,13 @@ export default function PropertyForm() {
     bathrooms: '',
     description: '',
     images: [],
+    tone: 'Luxury/Sophisticated',
+    customTone: '',
+    brandHashtags: '',
+    brandPhone: '',
+    brandWebsite: '',
   })
+
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
@@ -58,21 +64,6 @@ export default function PropertyForm() {
     widget.open()
   }
 
-  const handleImageUpload = (result) => {
-    if (result.event === 'success') {
-      const newImage = {
-        url: result.info.secure_url,
-        description: '',
-        name: '',
-      }
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, newImage],
-      }))
-      toast.success('Image uploaded!')
-    }
-  }
-
   const handleImageDescriptionChange = (index, field, value) => {
     setFormData((prev) => {
       const newImages = [...prev.images]
@@ -98,7 +89,6 @@ export default function PropertyForm() {
     }
 
     const propertyId = crypto.randomUUID()
-
     setLoading(true)
 
     try {
@@ -112,6 +102,14 @@ export default function PropertyForm() {
         bathrooms: parseInt(formData.bathrooms),
         description: formData.description,
         images: formData.images,
+        tone:
+          formData.tone === 'Custom'
+            ? formData.customTone
+            : formData.tone,
+        brandKit: {
+          hashtags: formData.brandHashtags,
+          phone: formData.brandPhone,
+        },
         createdAt: new Date(),
         postsGenerated: 0,
         posts: {
@@ -148,14 +146,13 @@ export default function PropertyForm() {
           transition={{ duration: 0.5 }}
           className="card"
         >
-          {/* Header */}
           <div className="mb-8">
             <h1 className="gradient-text text-3xl font-bold mb-2">Add New Property</h1>
             <p className="text-slate-400">Fill in the details to create a new property listing</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Property Details Section */}
+            {/* Property Details */}
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
                 <Home size={24} className="text-indigo-400" />
@@ -163,27 +160,20 @@ export default function PropertyForm() {
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Property Name */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">
-                    Property Name
-                  </label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Property Name</label>
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="e.g., Luxury Apartment in Victoria Island"
                     className="form-input"
                     required
                   />
                 </div>
 
-                {/* Location */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">
-                    Location
-                  </label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Location</label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-3 text-indigo-400" size={20} />
                     <input
@@ -191,18 +181,14 @@ export default function PropertyForm() {
                       name="location"
                       value={formData.location}
                       onChange={handleChange}
-                      placeholder="e.g., Lagos, Nigeria"
                       className="form-input pl-10"
                       required
                     />
                   </div>
                 </div>
 
-                {/* Price */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">
-                    Price (₦)
-                  </label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Price (₦)</label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-3 text-indigo-400" size={20} />
                     <input
@@ -210,59 +196,122 @@ export default function PropertyForm() {
                       name="price"
                       value={formData.price}
                       onChange={handleChange}
-                      placeholder="50000000"
                       className="form-input pl-10"
                       required
                     />
                   </div>
                 </div>
 
-                {/* Bedrooms */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">
-                    Bedrooms
-                  </label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Bedrooms</label>
                   <input
                     type="number"
                     name="bedrooms"
                     value={formData.bedrooms}
                     onChange={handleChange}
-                    placeholder="3"
                     className="form-input"
                     required
                   />
                 </div>
 
-                {/* Bathrooms */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">
-                    Bathrooms
-                  </label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Bathrooms</label>
                   <input
                     type="number"
                     name="bathrooms"
                     value={formData.bathrooms}
                     onChange={handleChange}
-                    placeholder="2"
                     className="form-input"
                     required
                   />
                 </div>
               </div>
 
-              {/* Description */}
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
-                  Description
-                </label>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Description</label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  placeholder="Describe the property, amenities, features, etc."
                   className="form-textarea"
                   rows="5"
                 />
+              </div>
+            </div>
+
+            {/* Brand & Tone Section */}
+            <div className="space-y-6 border-t border-indigo-500/10 pt-8">
+              <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+                <Sparkles size={24} className="text-indigo-400" />
+                Brand Voice & Tone
+              </h2>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Select Tone</label>
+                <select
+                  name="tone"
+                  value={formData.tone}
+                  onChange={handleChange}
+                  className="form-input"
+                >
+                  <option>Luxury/Sophisticated</option>
+                  <option>High-Energy/Hype</option>
+                  <option>Professional/Informative</option>
+                  <option>Custom</option>
+                </select>
+              </div>
+
+              {formData.tone === 'Custom' && (
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Custom Tone</label>
+                  <input
+                    type="text"
+                    name="customTone"
+                    value={formData.customTone}
+                    onChange={handleChange}
+                    placeholder="Describe your desired tone..."
+                    className="form-input"
+                    required
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Default Hashtags</label>
+                  <input
+                    type="text"
+                    name="brandHashtags"
+                    value={formData.brandHashtags}
+                    onChange={handleChange}
+                    placeholder="#LagosRealEstate #LuxuryLiving"
+                    className="form-input"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Phone Number</label>
+                  <input
+                    type="text"
+                    name="brandPhone"
+                    value={formData.brandPhone}
+                    onChange={handleChange}
+                    placeholder="e.g., +2348012345678"
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Website Link</label>
+                  <input
+                    type="text"
+                    name="brandWebsite"
+                    value={formData.brandWebsite}
+                    onChange={handleChange}
+                    placeholder="https://yourwebsite.com"
+                    className="form-input"
+                  />
+                </div>
               </div>
             </div>
 
@@ -273,7 +322,6 @@ export default function PropertyForm() {
                 Property Images
               </h2>
 
-              {/* Upload Widget */}
               <button
                 type="button"
                 onClick={openCloudinaryWidget}
@@ -283,12 +331,8 @@ export default function PropertyForm() {
                 Upload Image
               </button>
 
-              {/* Images List */}
               {formData.images.length > 0 && (
                 <div className="space-y-4">
-                  <p className="text-slate-400 text-sm">
-                    {formData.images.length} image(s) uploaded
-                  </p>
                   {formData.images.map((image, index) => (
                     <motion.div
                       key={index}
@@ -297,50 +341,34 @@ export default function PropertyForm() {
                       className="bg-slate-800/30 rounded-lg p-4 border border-indigo-500/10"
                     >
                       <div className="flex gap-4">
-                        {/* Image Preview */}
                         <img
                           src={image.url}
                           alt={`Property ${index + 1}`}
                           className="w-24 h-24 rounded-lg object-cover"
                         />
 
-                        {/* Image Details */}
                         <div className="flex-1 space-y-3">
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-400 mb-1">
-                              Image Name (e.g., Kitchen, Living Room)
-                            </label>
-                            <input
-                              type="text"
-                              value={image.name}
-                              onChange={(e) =>
-                                handleImageDescriptionChange(index, 'name', e.target.value)
-                              }
-                              placeholder="e.g., Kitchen"
-                              className="form-input text-sm"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-400 mb-1">
-                              Description
-                            </label>
-                            <input
-                              type="text"
-                              value={image.description}
-                              onChange={(e) =>
-                                handleImageDescriptionChange(
-                                  index,
-                                  'description',
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Describe this image..."
-                              className="form-input text-sm"
-                            />
-                          </div>
+                          <input
+                            type="text"
+                            value={image.name}
+                            onChange={(e) =>
+                              handleImageDescriptionChange(index, 'name', e.target.value)
+                            }
+                            placeholder="Image Name"
+                            className="form-input text-sm"
+                          />
+
+                          <input
+                            type="text"
+                            value={image.description}
+                            onChange={(e) =>
+                              handleImageDescriptionChange(index, 'description', e.target.value)
+                            }
+                            placeholder="Image Description"
+                            className="form-input text-sm"
+                          />
                         </div>
 
-                        {/* Remove Button */}
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
@@ -355,7 +383,6 @@ export default function PropertyForm() {
               )}
             </div>
 
-            {/* Submit Button */}
             <div className="flex gap-4 pt-8 border-t border-indigo-500/10">
               <button
                 type="submit"
