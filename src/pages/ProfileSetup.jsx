@@ -97,6 +97,7 @@ export default function ProfileSetup() {
       })
 
       toast.success('Profile updated successfully!')
+      localStorage.setItem('profileUser', JSON.stringify({ ...auth.currentUser, ...profileData }))
       navigate('/dashboard')
     } catch (error) {
       toast.error('Error updating profile')

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { auth, db } from '../firebase'
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
+import { doc, getDoc } from 'firebase/firestore'
 import { Plus, Home, Zap, TrendingUp } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'react-toastify'
@@ -18,28 +18,37 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        const q = query(
-          collection(db, 'properties'),
-          where('userId', '==', auth.currentUser.uid),
-          orderBy('createdAt', 'desc')
-        )
-        const querySnapshot = await getDocs(q)
-        const props = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-        setProperties(props)
+        const docRef = doc(db, 'properties', auth.currentUser.uid)
+        const docSnap = await getDoc(docRef)
 
-        // Calculate stats
-        setStats({
-          totalProperties: props.length,
-          totalPosts: props.reduce((sum, prop) => sum + (prop.postsGenerated || 0), 0),
-          thisMonth: props.filter(
-            (prop) =>
-              new Date(prop.createdAt?.toDate?.() || prop.createdAt) >
-              new Date(new Date().setDate(1))
-          ).length,
-        })
+        if (docSnap.exists()) {
+          const data = docSnap.data()
+          const props = data.properties || []
+
+          // Sort manually (since no query ordering anymore)
+          props.sort((a, b) => {
+            const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt)
+            const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt)
+            return dateB - dateA
+          })
+
+          setProperties(props)
+
+          setStats({
+            totalProperties: props.length,
+            totalPosts: props.reduce(
+              (sum, prop) => sum + (prop.postsGenerated || 0),
+              0
+            ),
+            thisMonth: props.filter((prop) => {
+              const created =
+                prop.createdAt?.toDate?.() || new Date(prop.createdAt)
+              return created > new Date(new Date().setDate(1))
+            }).length,
+          })
+        } else {
+          setProperties([])
+        }
       } catch (error) {
         toast.error('Error loading properties')
       } finally {

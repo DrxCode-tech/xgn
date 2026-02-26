@@ -19,22 +19,29 @@ export default function GeneratedPosts() {
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const docRef = doc(db, 'properties', propertyId)
+        const docRef = doc(db, 'properties', auth.currentUser.uid)
         const docSnap = await getDoc(docRef)
 
         if (!docSnap.exists()) {
+          toast.error('No properties found')
+          navigate('/dashboard')
+          return
+        }
+
+        const data = docSnap.data()
+        const propertiesArray = data.properties || []
+
+        const foundProperty = propertiesArray.find(
+          (prop) => prop.id === propertyId
+        )
+
+        if (!foundProperty) {
           toast.error('Property not found')
           navigate('/dashboard')
           return
         }
 
-        if (docSnap.data().userId !== auth.currentUser.uid) {
-          toast.error('Unauthorized')
-          navigate('/dashboard')
-          return
-        }
-
-        setProperty({ id: propertyId, ...docSnap.data() })
+        setProperty(foundProperty)
       } catch (error) {
         toast.error('Error loading property')
       } finally {
@@ -63,9 +70,25 @@ export default function GeneratedPosts() {
 
       // Update property with generated post
       const updatedPosts = { ...property.posts, [platform]: data.content }
-      await updateDoc(doc(db, 'properties', propertyId), {
-        posts: updatedPosts,
-        postsGenerated: (property.postsGenerated || 0) + 1,
+      const docRef = doc(db, 'properties', auth.currentUser.uid)
+      const docSnap = await getDoc(docRef)
+
+      const data1 = docSnap.data()
+      const propertiesArray = data1.properties || []
+
+      const updatedProperties = propertiesArray.map((prop) => {
+        if (prop.id === propertyId) {
+          return {
+            ...prop,
+            posts: updatedPosts,
+            postsGenerated: (prop.postsGenerated || 0) + 1,
+          }
+        }
+        return prop
+      })
+
+      await updateDoc(docRef, {
+        properties: updatedProperties,
       })
 
       setProperty((prev) => ({
@@ -94,8 +117,24 @@ export default function GeneratedPosts() {
         [editingTab]: editContent,
       }
 
-      await updateDoc(doc(db, 'properties', propertyId), {
-        posts: updatedPosts,
+      const docRef = doc(db, 'properties', auth.currentUser.uid)
+      const docSnap = await getDoc(docRef)
+
+      const data = docSnap.data()
+      const propertiesArray = data.properties || []
+
+      const updatedProperties = propertiesArray.map((prop) => {
+        if (prop.id === propertyId) {
+          return {
+            ...prop,
+            posts: updatedPosts,
+          }
+        }
+        return prop
+      })
+
+      await updateDoc(docRef, {
+        properties: updatedProperties,
       })
 
       setProperty((prev) => ({
@@ -183,9 +222,8 @@ export default function GeneratedPosts() {
                 <button
                   key={platform.id}
                   onClick={() => setActiveTab(platform.id)}
-                  className={`tab-button flex items-center gap-2 whitespace-nowrap ${
-                    isActive ? 'active' : ''
-                  }`}
+                  className={`tab-button flex items-center gap-2 whitespace-nowrap ${isActive ? 'active' : ''
+                    }`}
                 >
                   <Icon size={20} />
                   {platform.name}

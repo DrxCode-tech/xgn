@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { auth, db } from '../firebase'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, setDoc, serverTimestamp, arrayUnion } from 'firebase/firestore'
 import { Home, MapPin, DollarSign, Plus, Trash2, Loader, Image as ImageIcon } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { motion } from 'framer-motion'
@@ -97,10 +97,13 @@ export default function PropertyForm() {
       return
     }
 
+    const propertyId = crypto.randomUUID()
+
     setLoading(true)
 
     try {
       const propertyData = {
+        id: propertyId,
         userId: auth.currentUser.uid,
         name: formData.name,
         location: formData.location,
@@ -109,7 +112,7 @@ export default function PropertyForm() {
         bathrooms: parseInt(formData.bathrooms),
         description: formData.description,
         images: formData.images,
-        createdAt: serverTimestamp(),
+        createdAt: new Date(),
         postsGenerated: 0,
         posts: {
           facebook: null,
@@ -118,9 +121,17 @@ export default function PropertyForm() {
         },
       }
 
-      const docRef = await addDoc(collection(db, 'properties'), propertyData)
-      toast.success('Property created successfully!')
-      navigate(`/posts/${docRef.id}`)
+      const docRef = doc(db, 'properties', auth.currentUser.uid)
+      await setDoc(
+        docRef,
+        {
+          properties: arrayUnion(propertyData),
+        },
+        { merge: true }
+      )
+
+      toast.success('Property saved successfully!')
+      navigate(`/posts/${propertyId}`)
     } catch (error) {
       toast.error('Error creating property: ' + error.message)
     } finally {

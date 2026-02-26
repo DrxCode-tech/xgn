@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
-import { auth } from '../firebase'
+import { doc, getDoc } from 'firebase/firestore'
+import { db,auth } from '../firebase'
 import { Mail, Lock, Loader } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { motion } from 'framer-motion'
@@ -17,7 +18,14 @@ export default function Login() {
     setLoading(true)
     try {
       await signInWithEmailAndPassword(auth, email, password)
-      toast.success('Login successful!')
+      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid))
+      if (userDoc.exists() && !userDoc.data().profileComplete) {
+        toast.info('Please complete your profile')
+        navigate('/profile-setup')
+      } else {
+        localStorage.setItem('profileUser', JSON.stringify({ ...auth.currentUser, ...userDoc.data() }))
+        toast.success('Login successful!')
+      }
       navigate('/dashboard')
     } catch (error) {
       toast.error(error.message)
@@ -31,8 +39,17 @@ export default function Login() {
     try {
       const provider = new GoogleAuthProvider()
       await signInWithPopup(auth, provider)
-      toast.success('Login successful!')
-      navigate('/dashboard')
+      
+      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid))
+      if (userDoc.exists() && !userDoc.data().profileComplete) {
+        toast.info('Please complete your profile')
+        navigate('/profile-setup')
+      } else {
+        localStorage.setItem('profileUser', JSON.stringify({ ...auth.currentUser, ...userDoc.data() }))
+        console.log('Google user data:', { ...auth.currentUser, ...userDoc.data() })
+        toast.success('Login successful!')
+        navigate('/dashboard')
+      }
     } catch (error) {
       toast.error(error.message)
     } finally {

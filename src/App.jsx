@@ -12,6 +12,7 @@ import ProfileSetup from './pages/ProfileSetup'
 import Dashboard from './pages/Dashboard'
 import PropertyForm from './pages/PropertyForm'
 import GeneratedPosts from './pages/GeneratedPosts'
+import ProfilePage from './pages/profilePage'
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute'
@@ -63,6 +64,14 @@ function App() {
             element={
               <ProtectedRoute user={user}>
                 <PropertyForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/:userId"
+            element={
+              <ProtectedRoute user={user}>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />
