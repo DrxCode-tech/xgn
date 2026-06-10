@@ -8,11 +8,9 @@ import 'react-toastify/dist/ReactToastify.css'
 // Pages
 import Login from './pages/Login'
 import Signup from './pages/Signup'
-import ProfileSetup from './pages/ProfileSetup'
 import Dashboard from './pages/Dashboard'
-import PropertyForm from './pages/PropertyForm'
-import GeneratedPosts from './pages/GeneratedPosts'
-import ProfilePage from './pages/profilePage'
+import NewJournal from './pages/NewJournal'
+import TradeDetails from './pages/TradeDetails'
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute'
@@ -44,42 +42,26 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route
-            path="/profile-setup"
-            element={
-              <ProtectedRoute user={user}>
-                <ProfileSetup />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/dashboard"
             element={
               <ProtectedRoute user={user}>
-                <Dashboard />
+                <Dashboard user={user} />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/property/new"
+            path="/journal/new"
             element={
               <ProtectedRoute user={user}>
-                <PropertyForm />
+                <NewJournal user={user} />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/profile/:userId"
+            path="/journal/:tradeId"
             element={
               <ProtectedRoute user={user}>
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/posts/:propertyId"
-            element={
-              <ProtectedRoute user={user}>
-                <GeneratedPosts />
+                <TradeDetails user={user} />
               </ProtectedRoute>
             }
           />

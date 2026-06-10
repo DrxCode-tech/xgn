@@ -2,15 +2,12 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase'
-import { Menu, X, LogOut, Home } from 'lucide-react'
+import { Menu, X, LogOut, CandlestickChart, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function Navbar({ user }) {
   const [isOpen, setIsOpen] = useState(false)
   const navigate = useNavigate()
-
-  const userdata = JSON.parse(localStorage.getItem('profileUser'))
-  console.log('Navbar user data:', userdata)
 
   const handleLogout = async () => {
     try {
@@ -26,41 +23,21 @@ export default function Navbar({ user }) {
     <nav className="glass border-b border-indigo-500/10 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-
-          {/* Profile Avatar (Replaces X / XGN Logo) */}
-          <Link
-            to={`/profile/${user?.uid}`}
-            className="flex items-center gap-3 group"
-          >
-            <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-indigo-500/40 group-hover:border-indigo-400 transition-all duration-300 shadow-lg">
-              <img
-                src={
-                  userdata?.profilePhoto ||
-                  'https://via.placeholder.com/200'
-                }
-                alt="Profile"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-            </div>
-
-            {/* Optional name next to avatar (desktop only) */}
-            <span className="hidden sm:inline text-slate-300 font-semibold group-hover:text-indigo-400 transition-colors duration-300">
-              {userdata?.fullName || 'Profile'}
+          <Link to="/dashboard" className="flex items-center gap-3 text-white">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-500/15 text-cyan-300">
+              <CandlestickChart size={22} />
+            </span>
+            <span>
+              <span className="block text-sm font-bold leading-4">XGN Journal</span>
+              <span className="block text-xs text-slate-400">{user?.email}</span>
             </span>
           </Link>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-8">
-            <Link
-              to="/dashboard"
-              className="text-slate-300 hover:text-indigo-400 transition-colors duration-300 flex items-center gap-2"
-            >
-              <Home size={18} />
-              Dashboard
-            </Link>
-
-            <Link to="/property/new" className="btn-primary text-sm">
-              New Property
+            <Link to="/journal/new" className="btn-primary flex items-center gap-2 text-sm">
+              <Plus size={16} />
+              Record Trade
             </Link>
 
             <button
@@ -90,24 +67,11 @@ export default function Navbar({ user }) {
             className="md:hidden pb-4 space-y-2"
           >
             <Link
-              to="/dashboard"
-              className="block px-4 py-2 text-slate-300 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-all duration-300"
-            >
-              Dashboard
-            </Link>
-
-            <Link
-              to="/property/new"
+              to="/journal/new"
+              onClick={() => setIsOpen(false)}
               className="block px-4 py-2 btn-primary text-center"
             >
-              New Property
-            </Link>
-
-            <Link
-              to={`/profile/${userdata?.uid}`}
-              className="block px-4 py-2 text-slate-300 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-all duration-300"
-            >
-              View Profile
+              Record Trade
             </Link>
 
             <button

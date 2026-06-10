@@ -43,11 +43,11 @@ export default function Signup() {
         fullName: formData.fullName,
         email: formData.email,
         createdAt: new Date(),
-        profileComplete: false,
+        profileComplete: true,
       })
 
-      toast.success('Account created! Please complete your profile.')
-      navigate('/profile-setup')
+      toast.success('Account created!')
+      navigate('/dashboard')
     } catch (error) {
       toast.error(error.message)
     } finally {
@@ -69,13 +69,13 @@ export default function Signup() {
           email: userCredential.user.email,
           photoURL: userCredential.user.photoURL || '',
           createdAt: new Date(),
-          profileComplete: false,
+          profileComplete: true,
         },
         { merge: true }
       )
 
-      toast.success('Account created! Please complete your profile.')
-      navigate('/profile-setup')
+      toast.success('Account created!')
+      navigate('/dashboard')
     } catch (error) {
       toast.error(error.message)
     } finally {

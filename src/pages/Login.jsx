@@ -19,13 +19,8 @@ export default function Login() {
     try {
       await signInWithEmailAndPassword(auth, email, password)
       const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid))
-      if (userDoc.exists() && !userDoc.data().profileComplete) {
-        toast.info('Please complete your profile')
-        navigate('/profile-setup')
-      } else {
-        localStorage.setItem('profileUser', JSON.stringify({ ...auth.currentUser, ...userDoc.data() }))
-        toast.success('Login successful!')
-      }
+      localStorage.setItem('profileUser', JSON.stringify({ ...auth.currentUser, ...userDoc.data() }))
+      toast.success('Login successful!')
       navigate('/dashboard')
     } catch (error) {
       toast.error(error.message)
@@ -41,15 +36,9 @@ export default function Login() {
       await signInWithPopup(auth, provider)
       
       const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid))
-      if (userDoc.exists() && !userDoc.data().profileComplete) {
-        toast.info('Please complete your profile')
-        navigate('/profile-setup')
-      } else {
-        localStorage.setItem('profileUser', JSON.stringify({ ...auth.currentUser, ...userDoc.data() }))
-        console.log('Google user data:', { ...auth.currentUser, ...userDoc.data() })
-        toast.success('Login successful!')
-        navigate('/dashboard')
-      }
+      localStorage.setItem('profileUser', JSON.stringify({ ...auth.currentUser, ...userDoc.data() }))
+      toast.success('Login successful!')
+      navigate('/dashboard')
     } catch (error) {
       toast.error(error.message)
     } finally {
