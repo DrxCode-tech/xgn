@@ -28,7 +28,7 @@ export default function Navbar({ user }) {
               <CandlestickChart size={22} />
             </span>
             <span>
-              <span className="block text-sm font-bold leading-4">XGN Journal</span>
+              <span className="block text-sm font-bold leading-4">FX Journal</span>
               <span className="block text-xs text-slate-400">{user?.email}</span>
             </span>
           </Link>

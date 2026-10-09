@@ -5,6 +5,13 @@ import { ArrowLeft, ExternalLink, ImageOff, Trash2 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { db } from '../firebase'
 
+function normalizePair(value = '') {
+  return String(value ?? '')
+    .trim()
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase()
+}
+
 function formatEntryDate(value) {
   if (!value) return 'No date'
 
@@ -74,6 +81,7 @@ export default function TradeDetails({ user }) {
   }
 
   const successClass = trade.success === 'Yes' ? 'badge-success' : 'badge-error'
+  const rrValue = trade.rr == null || trade.rr === '' ? 'Not recorded' : `1:${Number(trade.rr)}`
 
   const handleDelete = async () => {
     const confirmed = window.confirm('Delete this trade from your journal?')
@@ -100,8 +108,8 @@ export default function TradeDetails({ user }) {
 
       <section className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wider text-cyan-300">Journal details</p>
-          <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl">{trade.pair}</h1>
+          <p className="text-sm font-semibold uppercase tracking-wider text-cyan-300">FX trade details</p>
+          <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl">{normalizePair(trade.pair)}</h1>
           <p className="mt-2 text-sm text-slate-300">{formatEntryDate(trade.entryDateTime)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -123,13 +131,11 @@ export default function TradeDetails({ user }) {
         <div className="glass rounded-lg p-5">
           <h2 className="mb-4 text-xl font-bold text-white">Trade Information</h2>
           <div className="grid gap-4 md:grid-cols-2">
-            <Detail label="Setup Name" value={trade.setupName} />
             <Detail label="Session Time" value={trade.sessionTime} />
             <Detail label="Entry Price" value={trade.entryPrice} />
             <Detail label="SL" value={trade.sl} />
             <Detail label="TP" value={trade.tp} />
-            <Detail label="Confidence Level" value={`${trade.confidenceLevel}/10`} />
-            <Detail label="Mental State/Psychology" value={trade.mentalState} wide />
+            <Detail label="RR (Risk/Reward)" value={rrValue} />
             <Detail label="Market Structure" value={trade.marketStructure} wide />
             <Detail label="Mistakes made" value={trade.mistakesMade || 'None recorded'} wide />
             <Detail label="Improvement Tips" value={trade.improvementTips || 'None recorded'} wide />
@@ -143,7 +149,7 @@ export default function TradeDetails({ user }) {
               <a href={trade.screenshotUrl} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg">
                 <img
                   src={trade.screenshotUrl}
-                  alt={`${trade.pair} trade screenshot`}
+                  alt={`${normalizePair(trade.pair)} trade screenshot`}
                   className="max-h-[520px] w-full rounded-lg object-contain"
                 />
               </a>

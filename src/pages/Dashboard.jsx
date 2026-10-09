@@ -6,7 +6,12 @@ import { motion } from 'framer-motion'
 import { toast } from 'react-toastify'
 import { db } from '../firebase'
 
-const PAIRS = ['EURUSD', 'GBPUSD', 'XAUUSD', 'BTCUSD']
+function normalizePair(value = '') {
+  return String(value ?? '')
+    .trim()
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase()
+}
 
 function percent(wins, total) {
   if (!total) return '0%'
@@ -32,6 +37,7 @@ function formatEntryDate(value) {
 export default function Dashboard({ user }) {
   const [trades, setTrades] = useState([])
   const [loadingTrades, setLoadingTrades] = useState(true)
+  const [selectedPair, setSelectedPair] = useState('')
 
   useEffect(() => {
     if (!user?.uid) return undefined
@@ -56,41 +62,50 @@ export default function Dashboard({ user }) {
   }, [user?.uid])
 
   const stats = useMemo(() => {
-    const pairStats = PAIRS.reduce((acc, pair) => {
-      acc[pair] = { total: 0, wins: 0, winRate: '0%' }
-      return acc
-    }, {})
+    const pairStats = {}
 
-    let wins = 0
     trades.forEach((trade) => {
-      const isWin = trade.success === 'Yes'
+      const pair = normalizePair(trade.pair)
+      if (!pair) return
 
-      if (pairStats[trade.pair]) {
-        pairStats[trade.pair].total += 1
-        if (isWin) pairStats[trade.pair].wins += 1
+      if (!pairStats[pair]) {
+        pairStats[pair] = { total: 0, wins: 0 }
       }
 
-      if (isWin) wins += 1
+      pairStats[pair].total += 1
+      if (trade.success === 'Yes') pairStats[pair].wins += 1
     })
 
-    PAIRS.forEach((pair) => {
-      pairStats[pair].winRate = percent(pairStats[pair].wins, pairStats[pair].total)
+    const normalizedStats = Object.fromEntries(
+      Object.entries(pairStats).map(([pair, data]) => [pair, { ...data, winRate: percent(data.wins, data.total) }])
+    )
+
+    const sortedPairs = Object.keys(normalizedStats).sort()
+    let wins = 0
+    trades.forEach((trade) => {
+      if (trade.success === 'Yes') wins += 1
     })
 
     const mostTradedPair =
-      PAIRS.reduce(
-        (highest, pair) => (pairStats[pair].total > highest.total ? { pair, total: pairStats[pair].total } : highest),
-        { pair: 'None yet', total: 0 }
-      ).pair
+      sortedPairs.reduce((highest, pair) => {
+        const total = normalizedStats[pair].total
+        return total > highest.total ? { pair, total } : highest
+      }, { pair: 'None yet', total: 0 }).pair
 
     return {
       totalTrades: trades.length,
       overallWinRate: percent(wins, trades.length),
       winningTrades: wins,
       mostTradedPair,
-      pairStats,
+      pairStats: normalizedStats,
+      sortedPairs,
     }
   }, [trades])
+
+  const visibleTrades = useMemo(() => {
+    if (!selectedPair) return trades
+    return trades.filter((trade) => normalizePair(trade.pair) === selectedPair)
+  }, [selectedPair, trades])
 
   const handleDeleteTrade = async (tradeId) => {
     const confirmed = window.confirm('Delete this trade from your journal?')
@@ -109,10 +124,10 @@ export default function Dashboard({ user }) {
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <section className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wider text-cyan-300">Strategy test journal</p>
+          <p className="text-sm font-semibold uppercase tracking-wider text-cyan-300">FX journal</p>
           <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl">Trade Dashboard</h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-300">
-            Track the strategy win rate across EURUSD, GBPUSD, XAUUSD, and BTCUSD.
+            Track your forex performance across every pair you trade and review each setup in context.
           </p>
         </div>
 
@@ -130,27 +145,50 @@ export default function Dashboard({ user }) {
       </section>
 
       <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {PAIRS.map((pair) => (
-          <div key={pair} className="glass rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-slate-300">{pair}</span>
-              <BarChart3 className="text-cyan-300" size={18} />
-            </div>
-            <p className="mt-3 text-3xl font-bold text-white">{stats.pairStats[pair].winRate}</p>
-            <p className="mt-1 text-sm text-slate-400">
-              {stats.pairStats[pair].wins} wins from {stats.pairStats[pair].total} trades
-            </p>
+        {stats.sortedPairs.length === 0 ? (
+          <div className="glass rounded-lg p-4 text-sm text-slate-300 md:col-span-2 xl:col-span-4">
+            No pairs recorded yet. Your dashboard will populate as soon as you log your first trade.
           </div>
-        ))}
+        ) : (
+          stats.sortedPairs.map((pair) => {
+            const isSelected = selectedPair === pair
+            return (
+              <button
+                key={pair}
+                type="button"
+                onClick={() => setSelectedPair(isSelected ? '' : pair)}
+                className={`glass rounded-lg p-4 text-left transition ${isSelected ? 'border border-cyan-400/60 bg-cyan-500/10' : 'hover:border-cyan-400/40'}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-300">{pair}</span>
+                  <BarChart3 className="text-cyan-300" size={18} />
+                </div>
+                <p className="mt-3 text-3xl font-bold text-white">{stats.pairStats[pair].winRate}</p>
+                <p className="mt-1 text-sm text-slate-400">
+                  {stats.pairStats[pair].wins} wins from {stats.pairStats[pair].total} trades
+                </p>
+              </button>
+            )
+          })
+        )}
       </section>
 
       <section className="glass mt-8 rounded-lg p-5">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-white">Journaled Trades</h2>
-            <p className="text-sm text-slate-400">Click any trade to view the full record and screenshot.</p>
+            <h2 className="text-xl font-bold text-white">{selectedPair ? `${selectedPair} trade history` : 'Journaled Trades'}</h2>
+            <p className="text-sm text-slate-400">
+              {selectedPair ? 'Only trades for this pair are visible below.' : 'Click any pair to filter the history below.'}
+            </p>
           </div>
-          <span className="badge badge-primary w-fit">{trades.length} total</span>
+          <div className="flex items-center gap-2">
+            {selectedPair && (
+              <button type="button" onClick={() => setSelectedPair('')} className="badge badge-primary cursor-pointer">
+                View all pairs
+              </button>
+            )}
+            <span className="badge badge-primary w-fit">{visibleTrades.length} total</span>
+          </div>
         </div>
 
         <div className="max-h-[640px] space-y-3 overflow-y-auto pr-2">
@@ -158,12 +196,14 @@ export default function Dashboard({ user }) {
             <div className="rounded-lg border border-indigo-500/10 bg-slate-900/40 p-4 text-slate-300">
               Loading trades...
             </div>
-          ) : trades.length === 0 ? (
+          ) : visibleTrades.length === 0 ? (
             <div className="rounded-lg border border-indigo-500/10 bg-slate-900/40 p-5 text-slate-300">
-              No trades recorded yet. Use the Record Trade button to add your first strategy test.
+              {selectedPair
+                ? `No trades recorded for ${selectedPair} yet.`
+                : 'No trades recorded yet. Use the Record Trade button to add your first forex trade.'}
             </div>
           ) : (
-            trades.map((trade) => <TradeListItem key={trade.id} trade={trade} onDelete={handleDeleteTrade} />)
+            visibleTrades.map((trade) => <TradeListItem key={trade.id} trade={trade} onDelete={handleDeleteTrade} />)
           )}
         </div>
       </section>
@@ -183,6 +223,7 @@ function StatCard({ icon, label, value, accent }) {
 
 function TradeListItem({ trade, onDelete }) {
   const successClass = trade.success === 'Yes' ? 'badge-success' : 'badge-error'
+  const rrValue = trade.rr == null || trade.rr === '' ? 'RR N/A' : `RR 1:${Number(trade.rr)}`
 
   return (
     <Link
@@ -192,18 +233,18 @@ function TradeListItem({ trade, onDelete }) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-lg font-bold text-white">{trade.pair}</h3>
+            <h3 className="text-lg font-bold text-white">{normalizePair(trade.pair)}</h3>
             <span className="badge badge-primary">{trade.direction}</span>
             <span className={`badge ${successClass}`}>{trade.success === 'Yes' ? 'Win' : 'Loss'}</span>
           </div>
           <p className="mt-1 text-sm text-slate-400">{formatEntryDate(trade.entryDateTime)}</p>
-          <p className="mt-2 text-sm font-semibold text-slate-300">{trade.setupName || 'Unnamed setup'}</p>
+          <p className="mt-2 text-sm font-semibold text-slate-300">{rrValue}</p>
         </div>
 
         <div className="flex items-center justify-between gap-4 sm:min-w-56">
           <div className="text-sm text-slate-300">
             <p>{trade.sessionTime}</p>
-            <p>Confidence {trade.confidenceLevel}/10</p>
+            <p>{trade.marketStructure || 'No structure noted'}</p>
           </div>
           <span className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-300">
             <Eye size={16} />

@@ -5,23 +5,27 @@ import { ArrowLeft, CalendarClock, CheckCircle2, Loader } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { db } from '../firebase'
 
-const PAIRS = ['EURUSD', 'GBPUSD', 'XAUUSD', 'BTCUSD']
 const SESSIONS = ['Tokyo', 'Sydney', 'London', 'New York']
 const DIRECTIONS = ['Buy', 'Sell']
 const SUCCESS_VALUES = ['Yes', 'No']
 
+function normalizePair(value = '') {
+  return String(value ?? '')
+    .trim()
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase()
+}
+
 const INITIAL_FORM = {
-  pair: 'EURUSD',
+  pair: '',
   entryDateTime: '',
   sessionTime: 'London',
-  setupName: '',
   marketStructure: '',
   direction: 'Buy',
   entryPrice: '',
   sl: '',
   tp: '',
-  mentalState: '',
-  confidenceLevel: '5',
+  rr: '',
   screenshotUrl: '',
   success: 'Yes',
   mistakesMade: '',
@@ -36,7 +40,8 @@ export default function NewJournal({ user }) {
 
   const handleChange = (event) => {
     const { name, value } = event.target
-    setFormData((current) => ({ ...current, [name]: value }))
+    const sanitizedValue = name === 'pair' ? normalizePair(value) : value
+    setFormData((current) => ({ ...current, [name]: sanitizedValue }))
   }
 
   const handleSubmit = async (event) => {
@@ -47,11 +52,18 @@ export default function NewJournal({ user }) {
       return
     }
 
+    const normalizedPair = normalizePair(formData.pair)
+    if (!normalizedPair) {
+      toast.error('Please enter a valid forex pair.')
+      return
+    }
+
     setSaving(true)
     try {
       const tradeRef = await addDoc(collection(db, 'users', user.uid, 'trades'), {
         ...formData,
-        confidenceLevel: Number(formData.confidenceLevel),
+        pair: normalizedPair,
+        rr: formData.rr === '' ? null : Number(formData.rr),
         entryPrice: Number(formData.entryPrice),
         sl: Number(formData.sl),
         tp: Number(formData.tp),
@@ -117,7 +129,7 @@ export default function NewJournal({ user }) {
             <ArrowLeft size={16} />
             Back to dashboard
           </Link>
-          <p className="text-sm font-semibold uppercase tracking-wider text-cyan-300">New journal entry</p>
+          <p className="text-sm font-semibold uppercase tracking-wider text-cyan-300">New FX journal entry</p>
           <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl">Record a Trade</h1>
         </div>
       </div>
@@ -129,12 +141,19 @@ export default function NewJournal({ user }) {
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Trade Details</h2>
-            <p className="text-sm text-slate-400">Fill the details for this strategy test trade.</p>
+            <p className="text-sm text-slate-400">Log your forex trade setup, execution, and review.</p>
           </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <SelectField label="Pair" name="pair" value={formData.pair} onChange={handleChange} options={PAIRS} />
+          <InputField
+            label="Pair"
+            name="pair"
+            value={formData.pair}
+            onChange={handleChange}
+            placeholder="EURUSD"
+            required
+          />
           <InputField
             label="Date & Time of Entry"
             name="entryDateTime"
@@ -150,7 +169,6 @@ export default function NewJournal({ user }) {
             onChange={handleChange}
             options={SESSIONS}
           />
-          <InputField label="Setup Name" name="setupName" value={formData.setupName} onChange={handleChange} required />
           <TextareaField
             label="Market Structure"
             name="marketStructure"
@@ -193,21 +211,14 @@ export default function NewJournal({ user }) {
             required
           />
           <InputField
-            label="Mental State/Psychology"
-            name="mentalState"
-            value={formData.mentalState}
-            onChange={handleChange}
-            placeholder="Confident, rushed, FOMO..."
-            required
-          />
-          <InputField
-            label="Confidence Level"
-            name="confidenceLevel"
+            label="RR (Risk/Reward)"
+            name="rr"
             type="number"
-            min="1"
-            max="10"
-            value={formData.confidenceLevel}
+            min="0"
+            step="0.01"
+            value={formData.rr}
             onChange={handleChange}
+            placeholder="2"
             required
           />
           <InputField

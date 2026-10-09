@@ -95,9 +95,9 @@ export default function Signup() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-bold text-2xl">X</span>
+              <span className="text-white font-bold text-2xl">F</span>
             </div>
-            <h1 className="gradient-text text-3xl font-bold mb-2">XGN</h1>
+            <h1 className="gradient-text text-3xl font-bold mb-2">FX-App</h1>
             <p className="text-slate-400">Create your account</p>
           </div>
 

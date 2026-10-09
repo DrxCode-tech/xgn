@@ -7,8 +7,8 @@ export default function LoadingSpinner() {
           <div className="absolute inset-2 bg-slate-950 rounded-full"></div>
           <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-indigo-500 border-r-indigo-500 animate-spin"></div>
         </div>
-        <p className="text-slate-300 text-lg font-semibold">Loading XGN...</p>
-        <p className="text-slate-500 text-sm mt-2">Preparing your real estate workspace</p>
+        <p className="text-slate-300 text-lg font-semibold">Loading FX-App...</p>
+        <p className="text-slate-500 text-sm mt-2">Preparing your forex trading workspace</p>
       </div>
     </div>
   )
