@@ -57,8 +57,12 @@ export default function Login() {
         <div className="card">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-bold text-2xl">F</span>
+            <div className="mx-auto mb-4 h-16 w-16 overflow-hidden rounded-xl bg-gradient-to-br from-indigo-600 to-pink-600 shadow-lg shadow-pink-900/30">
+              <img
+                src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=200&q=80"
+                alt="Forex trade chart"
+                className="h-full w-full object-cover"
+              />
             </div>
             <h1 className="gradient-text text-3xl font-bold mb-2">FX-App</h1>
             <p className="text-slate-400">Forex trade journal</p>
